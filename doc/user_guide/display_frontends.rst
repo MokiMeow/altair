@@ -77,6 +77,92 @@ You can use ``alt.renderers.names()`` to return all registered renderers as a Py
 Other renderers can be installed by third-party packages via Python's entrypoints system or you can create your own,
 see :ref:`customizing-renderers`.
 
+.. _display-embed-options:
+
+Configuring chart embedding
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The default HTML renderer uses Vega-Embed to display charts. Use
+``alt.renderers.set_embed_options()`` to configure the embedded view, for example
+to hide the action menu beside charts:
+
+.. code-block:: python
+
+    import altair as alt
+
+    alt.renderers.set_embed_options(actions=False)
+
+To hide only the "Open in Vega Editor" action, use
+``alt.renderers.set_embed_options(actions={"editor": False})`` instead.
+Other options include ``renderer="svg"`` to render the interactive chart as SVG.
+See the `Vega-Embed options <https://github.com/vega/vega-embed#options>`_ for the
+full list.
+
+These settings apply to subsequent chart displays. To change them temporarily
+for an existing chart called ``chart``, use a context manager and display the
+chart inside the block:
+
+.. code-block:: python
+
+    from IPython.display import display
+
+    with alt.renderers.set_embed_options(actions=False, renderer="svg"):
+        display(chart)
+
+The previous renderer settings are restored when the block exits. Each call to
+``set_embed_options()`` replaces the previous embed options, so pass options
+that should apply together in the same call.
+
+Embed options control the display, not the chart specification returned by
+``chart.to_dict()`` or ``chart.to_json()``. When saving an HTML file, pass the
+options to ``chart.save()`` explicitly:
+
+.. code-block:: python
+
+    chart.save("chart.html", embed_options={"actions": False})
+
+See :ref:`user-guide-saving` for more about exporting charts.
+
+.. _display-chart-show:
+
+Explicitly displaying charts with ``show()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In notebook environments, the final expression of a cell is displayed
+automatically. To display more than one chart in a single cell, invoke
+``chart.show()`` on each chart instead. The method immediately invokes the
+active renderer instead of relying on the notebook's final-expression display
+mechanism.
+
+For example, this cell displays two separate charts:
+
+.. code-block:: python
+
+    import altair as alt
+    import pandas as pd
+
+    source = pd.DataFrame({
+        "category": ["A", "B", "C"],
+        "value": [2, 5, 3],
+    })
+    bars = alt.Chart(source).mark_bar().encode(
+        x="category:N", y="value:Q"
+    )
+    points = alt.Chart(source).mark_point().encode(
+        x="category:N", y="value:Q"
+    )
+
+    bars.show()
+    points.show()
+
+The behavior depends on the selected renderer. With the default HTML renderer
+in a supported notebook, both charts appear as separate cell outputs. Other
+non-browser renderers also require an IPython environment for ``show()``.
+With the ``"browser"`` renderer, each call opens the chart in a browser
+instead, including from a standard Python REPL; see :ref:`display-browser`
+for its requirements and limitations.
+
+
 .. _display-jupyterlab:
 
 Displaying in JupyterLab
